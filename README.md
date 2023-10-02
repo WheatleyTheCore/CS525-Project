@@ -22,3 +22,7 @@ This smartphone app is intended to figure out what position/action the user is d
 2. https://github.com/tensorflow/tfjs-examples/tree/master/react-native are some great examples of using tensorflow on mobile devices. 
 3. https://www.tensorflow.org/js/tutorials/applications/react_native -- The docs for tensorflow react native
 4. https://www.tensorflow.org/lite/guide -- the docs for tf lite, which I believe tf-react uses under the hood
+
+## Stretch Goals
+1. also be able to classify things that happen over time, lke walking. Minimum viable product is something that can classify static positions.
+2. Maybe implement little app that will notice when you've been sitting for over an hour and tell you it's time to stand up and move around a bit.
