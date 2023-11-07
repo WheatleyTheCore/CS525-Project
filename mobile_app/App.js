@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
-import { makeCSV } from './utils/makecsv';
+import { makeCSV, saveDataAsCSV } from './utils/saveDataAsCSV';
 
 export default function App() {
   const [{ x, y, z }, setData] = useState({
@@ -9,7 +9,13 @@ export default function App() {
     y: 0,
     z: 0,
   });
+
   const [subscription, setSubscription] = useState(null);
+  
+  // id for setInterval that we use for recording sensor data.
+  const intervalIdRef = useRef(null)
+
+  let jsonData = useRef([])
 
   const _slow = () => Accelerometer.setUpdateInterval(1000);
   const _fast = () => Accelerometer.setUpdateInterval(16);
@@ -22,6 +28,23 @@ export default function App() {
     subscription && subscription.remove();
     setSubscription(null);
   };
+
+  const startRecordingSensorData = () => {
+    intervalIdRef.current = []
+    intervalIdRef.current = setInterval(() => {
+      let currentJsonData = jsonData.current
+      currentJsonData.push({
+        x: x,
+        y: y,
+        z: y
+      })
+    }, 50)
+  }
+
+  const stopRecordingData = () => {
+    clearInterval(intervalIdRef.current)
+    saveDataAsCSV(jsonData.current)
+  }
 
   useEffect(() => {
     _subscribe();
