@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
+import { makeCSV } from './utils/makecsv';
 
 export default function App() {
   const [{ x, y, z }, setData] = useState({
@@ -43,6 +44,7 @@ export default function App() {
         <TouchableOpacity onPress={_fast} style={styles.button}>
           <Text>Fast</Text>
         </TouchableOpacity>
+        <Button title="MAKE CSV" onPress={() => makeCSV()} />
       </View>
     </View>
   );
