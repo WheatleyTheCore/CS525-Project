@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Accelerometer, Gyroscope } from 'expo-sensors';
 import { Audio } from 'expo-av';
+import { Picker } from '@react-native-picker/picker';
 import { saveDataAsCSV } from './utils/saveDataAsCSV';
 
 export default function App() {
@@ -22,6 +23,8 @@ export default function App() {
 
   const [startSound, setStartSound] = useState()
   const [endSound, setEndSound] = useState()
+
+  const [label, setLabel] = useState("Sitting")
 
 
   // id for setInterval that we use for recording sensor data.
@@ -46,13 +49,21 @@ export default function App() {
   };
 
   const startRecordingSensorData = async () => {
+    // handle intermediate re-record starts so we can have multiple things in one csv
+    if (intervalIdRef.current) {
+      clearInterval(intervalIdRef.current)
+      let processedJsonData = [...jsonData.current]
+      for (let i = 0; i < 120; i++) { //remove stuff from last 6 sconds (i.e. last 100 elements since we record every 50 ms). also kinda hacky
+        processedJsonData.pop()
+      }
+      jsonData.current = processedJsonData
+    }
 
-    jsonData.current = []
 
     // load sounds
     console.log('Loading Sound');
     const startSound = new Audio.Sound();
-    await startSound.loadAsync(require('./assets/mariostart.mp3'), {shouldPlay: true})
+    await startSound.loadAsync(require('./assets/mariostart.mp3'), { shouldPlay: true })
     setStartSound(startSound)
 
     console.log('Playing Sound');
@@ -60,8 +71,8 @@ export default function App() {
     await startSound.playAsync()
 
     await delay(5000) // wait 5 seconds for the sound to finish playing. Definitely a better way to do this but I don't have time to find it atm
-
-    console.log('recording!')
+    let dataLabel = label
+    console.log(`recording ${dataLabel}!`)
     intervalIdRef.current = setInterval(() => {
       let updatedJsonData = jsonData.current
       setAccelData(accelData => { // using the set functions to get state within the setinterval is hacky and very bad
@@ -72,7 +83,8 @@ export default function App() {
             "AccelZ": accelData.z.toString(),
             "GyroX": gyroData.x.toString(),
             "GyroY": gyroData.y.toString(),
-            "GyroZ": gyroData.z.toString()
+            "GyroZ": gyroData.z.toString(),
+            "Label": dataLabel
           })
           return gyroData
         })
@@ -85,9 +97,8 @@ export default function App() {
   const stopRecordingSensorData = () => {
     if (intervalIdRef.current) {
       clearInterval(intervalIdRef.current)
-      intervalIdRef.current = []
+      intervalIdRef.current = null
       let processedJsonData = [...jsonData.current]
-      //console.log(Array.isArray(processedJsonData))
       jsonData.current = []
       for (let i = 0; i < 100; i++) { //remove stuff from last 5 sconds (i.e. last 100 elements since we record every 50 ms). also kinda hacky
         processedJsonData.pop()
@@ -102,7 +113,7 @@ export default function App() {
     Gyroscope.setUpdateInterval(30);
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
-  })
+    })
     return () => {
       _unsubscribe();
       if (startSound) startSound.unloadAsync();
@@ -116,15 +127,18 @@ export default function App() {
       <Text style={styles.text}>accelX: {accelData.x.toFixed(2)}</Text>
       <Text style={styles.text}>accelY: {accelData.y.toFixed(2)}</Text>
       <Text style={styles.text}>accelZ: {accelData.z.toFixed(2)}</Text>
-      {/* <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={subscription ? _unsubscribe : _subscribe} style={styles.button}>
-          <Text>{subscription ? 'On' : 'Off'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={_slow} style={[styles.button, styles.middleButton]}>
-          <Text>Slow</Text>
-        </TouchableOpacity>
-        
-      </View> */}
+      <Picker
+        selectedValue={label}
+        onValueChange={(val, index) => {
+          console.log(val)
+          setLabel(val)
+        }}
+      >
+        <Picker.Item label="Sitting" value="Sitting" />
+        <Picker.Item label="Standing" value="Standing" />
+        <Picker.Item label="Walking" value="Walking" />
+        <Picker.Item label="Crouching" value="Crouching" />
+      </Picker>
       <Button title="Start Recording" onPress={() => startRecordingSensorData()} />
       <Button title="Stop Recording" onPress={() => stopRecordingSensorData()} />
 
