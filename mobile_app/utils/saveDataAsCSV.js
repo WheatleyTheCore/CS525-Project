@@ -6,7 +6,7 @@ import * as Sharing from "expo-sharing";
 export async function saveDataAsCSV(jsonData) {
 
     /**  jsonData should be an array of row objects, e.g.:
-     * jsonData = `[
+     * jsonData = [
         {
             "Column 1": "1-1",
             "Column 2": "1-2",
@@ -31,10 +31,10 @@ export async function saveDataAsCSV(jsonData) {
             "Column 3": 6,
             "Column 4": 7
         }
-        ]`
+        ]
      * 
      * */
-    const jsonData = `${jsonData}`;
+
 
     const CSV = jsonToCSV(jsonData);
 

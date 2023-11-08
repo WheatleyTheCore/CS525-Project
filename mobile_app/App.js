@@ -1,32 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Accelerometer } from 'expo-sensors';
-import { makeCSV, saveDataAsCSV } from './utils/saveDataAsCSV';
+import { Accelerometer, Gyroscope } from 'expo-sensors';
+import { saveDataAsCSV } from './utils/saveDataAsCSV';
 
 export default function App() {
-  const [{ x, y, z }, setData] = useState({
+  const [accelData, setAccelData] = useState({
     x: 0,
     y: 0,
     z: 0,
   });
 
-  const [subscription, setSubscription] = useState(null);
-  
+  const [gyroData, setGyroData] = useState({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
+
+  const [accelSubscription, setAccelSubscription] = useState(null);
+  const [gyroSubscription, setGyroSubscription] = useState(null);
+
+
   // id for setInterval that we use for recording sensor data.
   const intervalIdRef = useRef(null)
 
   let jsonData = useRef([])
 
-  const _slow = () => Accelerometer.setUpdateInterval(1000);
-  const _fast = () => Accelerometer.setUpdateInterval(16);
-
   const _subscribe = () => {
-    setSubscription(Accelerometer.addListener(setData));
+    setAccelSubscription(Accelerometer.addListener(data => setAccelData(data)));
+    setGyroSubscription(Gyroscope.addListener(data => setGyroData(data)))
   };
 
   const _unsubscribe = () => {
-    subscription && subscription.remove();
-    setSubscription(null);
+    accelSubscription && accelSubscription.remove()
+    gyroSubscription && gyroSubscription.remove()
+    setAccelSubscription(null)
+    setGyroSubscription(null)
   };
 
   const startRecordingSensorData = () => {
@@ -34,41 +42,46 @@ export default function App() {
     intervalIdRef.current = setInterval(() => {
       let currentJsonData = jsonData.current
       currentJsonData.push({
-        x: x,
-        y: y,
-        z: y
+        "AccelX": accelData.x.toString(),
+        "AccelY": accelData.y.toString(),
+        "AccelZ": accelData.z.toString(),
+        "GyroX": gyroData.x.toString(),
+        "GyroY": gyroData.y.toString(),
+        "GyroZ": gyroData.z.toString()
       })
     }, 50)
   }
 
-  const stopRecordingData = () => {
+  const stopRecordingSensorData = () => {
     clearInterval(intervalIdRef.current)
     saveDataAsCSV(jsonData.current)
   }
 
   useEffect(() => {
-    _subscribe();
+    _subscribe()
+    Accelerometer.setUpdateInterval(30);
+    Gyroscope.setUpdateInterval(30);
     return () => _unsubscribe();
   }, []);
+  
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Accelerometer: (in gs where 1g = 9.81 m/s^2)</Text>
-      <Text style={styles.text}>x: {x}</Text>
-      <Text style={styles.text}>y: {y}</Text>
-      <Text style={styles.text}>z: {z}</Text>
-      <View style={styles.buttonContainer}>
+      <Text style={styles.text}>accelX: {accelData.x.toFixed(2)}</Text>
+      <Text style={styles.text}>accelY: {accelData.y.toFixed(2)}</Text>
+      <Text style={styles.text}>accelZ: {accelData.z.toFixed(2)}</Text>
+      {/* <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={subscription ? _unsubscribe : _subscribe} style={styles.button}>
           <Text>{subscription ? 'On' : 'Off'}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={_slow} style={[styles.button, styles.middleButton]}>
           <Text>Slow</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={_fast} style={styles.button}>
-          <Text>Fast</Text>
-        </TouchableOpacity>
-        <Button title="MAKE CSV" onPress={() => makeCSV()} />
-      </View>
+        
+      </View> */}
+      <Button title="Start Recording" onPress={() => startRecordingSensorData()} />
+      <Button title="Stop Recording" onPress={() => stopRecordingSensorData()} />
+
     </View>
   );
 }
