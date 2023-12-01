@@ -1,0 +1,1 @@
+This is literally just the model folder that's the output of the tensorflowjs_converter command. 
