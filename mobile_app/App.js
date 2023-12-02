@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { Accelerometer, Gyroscope } from 'expo-sensors';
 import { Audio } from 'expo-av';
 import { Picker } from '@react-native-picker/picker';
@@ -8,10 +8,10 @@ import '@tensorflow/tfjs-react-native';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native'
 import { saveDataAsCSV } from './utils/saveDataAsCSV';
 import { MNISTDataset } from 'tfjs-data-mnist';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-
 
 const modelJSON = require('./model/model.json')
 const modelWeights = require('./model/group1-shard1of1.bin')
@@ -28,6 +28,7 @@ function RecognizeScreen()  {
     const [model, setModel] = useState()
     const [ds, setDs] = useState()
     const [prediction, setPrediction] = useState("none")
+
     useEffect(() => {
         const setUpTf = async () => {
             await tf.ready()
@@ -40,27 +41,145 @@ function RecognizeScreen()  {
             await tf.ready()
             setIsTfReady(true)
         }
-        setUpTf()
-    }, [])
+        setUpTf();
+    }, []);
+
+    const val = ['sit','stand','walk','crouch'];
+
+    const audioPaths = {
+        sit: require('./assets/sitting.mp3'),
+        stand: require('./assets/standing.mp3'),
+        walk: require('./assets/walking.mp3'),
+        crouch: require('./assets/crouching.mp3'),
+    };
+
+    const imgPaths = {
+        start: require('./assets/start.png'),
+        sit: require('./assets/sit.png'),
+        stand: require('./assets/stand.png'),
+        walk: require('./assets/walk.png'),
+        crouch: require('./assets/crouch.png'),
+    };
+
+    const [buttonImage, setButtonImage] = useState(imgPaths.start);
+
+    const [audioPlayer, setAudioPlayer] = useState(new Audio.Sound());
+
+    const predic = async (pred) => {
+        // Change the image source based on the prediction
+        switch (pred) {
+            case 'sit':
+                setButtonImage(imgPaths.sit);
+                audioPlayer.pauseAsync();
+                await audioPlayer.unloadAsync();  // Unload the current audio player
+                const newAudioPlayerSit = new Audio.Sound();
+                await newAudioPlayerSit.loadAsync(audioPaths[pred]);
+                // newAudioPlayerSit.setIsLoopingAsync(true);
+                await newAudioPlayerSit.playAsync();
+                setAudioPlayer(newAudioPlayerSit);
+
+                for (let i = 0; i < 3; i++) {
+                    await newAudioPlayerSit.playAsync();
+                    await new Promise(resolve => setTimeout(resolve, 1000));  // 1-second delay
+                    await newAudioPlayerSit.stopAsync();
+                    await newAudioPlayerSit.setPositionAsync(0);  // Reset position for replay
+                }
+
+                break;
+
+            case 'stand':
+                setButtonImage(imgPaths.stand);
+                audioPlayer.pauseAsync();
+                await audioPlayer.unloadAsync();  // Unload the current audio player
+                const newAudioPlayerStand = new Audio.Sound();
+                await newAudioPlayerStand.loadAsync(audioPaths[pred]);
+                // newAudioPlayerStand.setIsLoopingAsync(true);
+                await newAudioPlayerStand.playAsync();
+                setAudioPlayer(newAudioPlayerStand);
+
+                for (let i = 0; i < 3; i++) {
+                    await newAudioPlayerStand.playAsync();
+                    await new Promise(resolve => setTimeout(resolve, 1000));  // 1-second delay
+                    await newAudioPlayerStand.stopAsync();
+                    await newAudioPlayerStand.setPositionAsync(0);  // Reset position for replay
+                }
+
+                break;
+
+            case 'walk':
+                setButtonImage(imgPaths.walk);
+                audioPlayer.pauseAsync();
+                await audioPlayer.unloadAsync();  // Unload the current audio player
+                const newAudioPlayerW = new Audio.Sound();
+                await newAudioPlayerW.loadAsync(audioPaths[pred]);
+                // newAudioPlayerW.setIsLoopingAsync(true);
+                await newAudioPlayerW.playAsync();
+                setAudioPlayer(newAudioPlayerW);
+
+                for (let i = 0; i < 3; i++) {
+                    await newAudioPlayerW.playAsync();
+                    await new Promise(resolve => setTimeout(resolve, 1000));  // 1-second delay
+                    await newAudioPlayerW.stopAsync();
+                    await newAudioPlayerW.setPositionAsync(0);  // Reset position for replay
+                }
+
+                break;
+
+            case 'crouch':
+                setButtonImage(imgPaths.crouch);
+                audioPlayer.pauseAsync();
+                await audioPlayer.unloadAsync();  // Unload the current audio player
+                const newAudioPlayerC = new Audio.Sound();
+                await newAudioPlayerC.loadAsync(audioPaths[pred]);
+                // newAudioPlayerC.setIsLoopingAsync(true);
+                await newAudioPlayerC.playAsync();
+                setAudioPlayer(newAudioPlayerC);
+
+                for (let i = 0; i < 3; i++) {
+                    await newAudioPlayerC.playAsync();
+                    await new Promise(resolve => setTimeout(resolve, 1000));  // 1-second delay
+                    await newAudioPlayerC.stopAsync();
+                    await newAudioPlayerC.setPositionAsync(0);  // Reset position for replay
+                }
+
+                break;
+
+            default:
+                setButtonImage(imgPaths.start);
+        }
+    };
 
     return (
-        <View style={styles.container}>
-            {/*<Text>Tf: {isTfReady? "ready" : "not ready"}</Text>*/}
-            {/*{isTfReady ? (*/}
-            {/*    <>*/}
-                  <Button
-                      title="make prediction"
-                      color={theme_color}
-                      onPress={() => setPrediction(
-                          JSON.stringify(model.predict(MNISTnumber[0]))
-                      )}
-                  />
-            {/*      <Text>{prediction}</Text>*/}
-            {/*    </>*/}
-            {/*) : null}*/}
+
+        <View style={img_styles.container}>
+
+            <TouchableOpacity onPress={() => predic('stand')}>
+                <Image source={buttonImage} style={img_styles.imageButton} />
+            </TouchableOpacity>
+
         </View>
     )
 }
+
+{/*<Button title={buttonTitle}*/}
+{/*        onPress={()=>predic('walk')}>*/}
+{/*    /!*onPress={()=>alert('Sitting')}>*!/*/}
+{/*</Button>*/}
+
+{/*<Text>Tf: {isTfReady? "ready" : "not ready"}</Text>*/}
+{/*{isTfReady ? (*/}
+{/*    <>*/}
+{/*      <Button*/}
+{/*          title="make prediction"*/}
+{/*          color={theme_color}*/}
+{/*          onPress={() => setPrediction(*/}
+{/*              JSON.stringify(model.predict(MNISTnumber[0]))*/}
+{/*          )}*/}
+{/*      />*/}
+{/*      <Text>{prediction}</Text>*/}
+{/*    </>*/}
+{/*) : null}*/}
+
 
 //second Page
 const RecordScreen = () => {
@@ -228,18 +347,29 @@ export default function App() {
 
   return (
     <NavigationContainer theme={MyTheme}>
-      <Tab.Navigator
-          screenOptions={{
-              headerStyle: {
-                  backgroundColor: theme_color,
-              },
-              headerTintColor: '#ffffff',
-              tabBarStyle: {
-                  backgroundColor: '#ffffff',
-              },
-              tabBarActiveTintColor: theme_color
-          }}
-      >
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                headerStyle: {
+                    backgroundColor: theme_color,
+                },
+                headerTintColor: '#ffffff',
+                tabBarStyle: {
+                    backgroundColor: '#ffffff',
+                },
+                tabBarActiveTintColor: theme_color,
+                tabBarIcon: ({ color, size }) => {
+                    let iconName;
+
+                    if (route.name === 'Detect') {
+                        iconName = 'search'; // Change this to the name of your icon for 'Detect'
+                    } else if (route.name === 'Record') {
+                        iconName = 'input'; // Change this to the name of your icon for 'Record'
+                    }
+
+                    return <MaterialIcons name={iconName} size={size} color={color} />;
+                },
+            })}
+        >
         <Tab.Screen name="Detect" component={RecognizeScreen} />
         <Tab.Screen name="Record" component={RecordScreen} />
       </Tab.Navigator>
@@ -283,3 +413,17 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
 });
+
+const img_styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageButton: {
+        width: 300,
+        height: 300,
+        // Add any additional styling you need for your image button
+    },
+});
+
