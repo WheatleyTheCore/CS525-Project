@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import datasets, layers, models
 import numpy as np
 import tensorflow_datasets as tfds
+import time 
 print("TensorFlow version:", tf.__version__)
 
 
@@ -18,32 +19,22 @@ if __name__ == "__main__":
     train_dataset = dataset.take(train_size)
     test_dataset = dataset.skip(train_size)
 
-    # train_x = np.concatenate([x for x, y in train_dataset], axis=0)
-    # train_y = np.concatenate([y for x, y in train_dataset], axis=0)
+    output_decoder = {
+        0: 'Sitting',
+        1: 'Standing',
+        2: "Walking",
+        3: "Crouching"
+    }
 
-    # print(train_y)
-
-    # train_data, train_labels = tuple(zip(*train_dataset))
-    # test_data, test_labels = tuple(zip(*test_dataset))
-
-    # train_data = np.asarray(train_data)
-    # train_labels = np.asarray(train_labels)
-    # test_data = np.asarray(test_data)
-    # test_labels = np.asarray(test_labels)
-
-    # (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    # x_train, x_test = x_train / 255.0, x_test / 255.0
 
     # plt.figure(figsize=(10,10))
-    # for i, (x, y) in enumerate(train_dataset.take(25)):
-    #     plt.subplot(5,5,i+1)
+    # for i, (x, y) in enumerate(train_dataset.take(10)):
+    #     plt.subplot(2,5,i+1)
     #     plt.xticks([])
     #     plt.yticks([])
     #     plt.grid(False)
-    #     plt.imshow(x)
-    #     # The CIFAR labels happen to be arrays, 
-    #     # which is why you need the extra index
-    #     plt.xlabel(y.numpy())
+    #     plt.imshow(x[0])
+    #     plt.xlabel(output_decoder[y[0].numpy()])
     # plt.show()
 
     model = models.Sequential()
@@ -57,30 +48,75 @@ if __name__ == "__main__":
     model.add(layers.Dense(10, activation='relu'))
     model.add(layers.Dense(4))
 
-    model.summary()
-
-
     model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
     
     history = model.fit(train_dataset, epochs=10, 
                     validation_data=test_dataset)
-    print(history.history.keys())
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.0, 1])
+    # print(history.history.keys())
+    # plt.plot(history.history['accuracy'], label='accuracy')
+    # plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Accuracy')
+    # plt.ylim([0.0, 1])
+    # plt.legend(loc='lower right')
+    # plt.show()
+
+
+
+    # Create some different quantization options
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    dynamic_quant_model = converter.convert()
+
+    converter.target_spec.supported_types = [tf.float16]
+    converter.representative_dataset = test_dataset
+    float16_model = converter.convert()
+
+    # converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    # converter.target_spec.supported_types = [tf.int8]
+    # converter.inference_input_type = tf.int8  # or tf.uint8
+    # converter.inference_output_type = tf.int8  # or tf.uint8
+    # int8_model = converter.convert()
+
+    
+    models = ['float16', 'dynamic', 'full']
+    times = []
+    accuracies = []
+
+    # tf.config.experimental.reset_memory_stats()
+    # start_time = time()
+    # test_loss, test_acc = int8_model.evaluate(test_dataset, verbose=2)
+    # times.append(time() - start_time)
+    # accuracies.append(test_acc)
+    # peak_mem.append(tf.config.experimental.get_memory_info("CPU").peak)
+
+    start_time = time.time()
+    test_loss, test_acc = float16_model.evaluate(test_dataset, verbose=2)
+    times.append(time.time() - start_time)
+    accuracies.append(test_acc)
+
+    start_time = time.time()
+    test_loss, test_acc = dynamic_quant_model.evaluate(test_dataset, verbose=2)
+    times.append(time.time() - start_time)
+    accuracies.append(test_acc)
+
+    start_time = time.time()
+    test_loss, test_acc = model.evaluate(test_dataset, verbose=2)
+    times.append(time.time() - start_time)
+    accuracies.append(test_acc)
+
+    plt.plot(models, times, label='times')
+    plt.plot(models, accuracies, label='accuracy')
+    plt.xlabel('Model')
     plt.legend(loc='lower right')
     plt.show()
 
-    test_loss, test_acc = model.evaluate(test_dataset, verbose=2)
-
-    print(test_acc)
 
 
-    tf.saved_model.save(model, './savedModel/1/')
+
+    #tf.saved_model.save(model, './savedModel/1/')
 
 
 
