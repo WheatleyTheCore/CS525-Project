@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
 
     # plt.figure(figsize=(10,10))
-    # for i, (x, y) in enumerate(train_dataset.take(10)):
+    # for i, (x, y) in enumerate(train_dataset.take(5)):
     #     plt.subplot(2,5,i+1)
     #     plt.xticks([])
     #     plt.yticks([])
@@ -42,7 +42,6 @@ if __name__ == "__main__":
     model.add(layers.MaxPooling2D((2, 1)))
     model.add(layers.Conv2D(64, (3, 1), activation='relu'))
     model.add(layers.MaxPooling2D((2, 1)))
-    # model.add(layers.Conv2D(64, (2, 1), activation='relu'))
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(10, activation='relu'))
@@ -63,6 +62,7 @@ if __name__ == "__main__":
     # plt.legend(loc='lower right')
     # plt.show()
 
+    #tf.keras.utils.plot_model(model, to_file='./modelImg.png', show_shapes=True)
 
 
     # Create some different quantization options
