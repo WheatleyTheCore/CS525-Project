@@ -136,7 +136,7 @@ function RecognizeScreen() {
                     setPrediction(outputClass)
                 }
         
-            }, 500)
+            }, 1000)
         }
 
         const setUpSounds = async () => {

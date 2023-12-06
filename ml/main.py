@@ -53,70 +53,106 @@ if __name__ == "__main__":
     
     history = model.fit(train_dataset, epochs=10, 
                     validation_data=test_dataset)
-    # print(history.history.keys())
-    # plt.plot(history.history['accuracy'], label='accuracy')
-    # plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Accuracy')
-    # plt.ylim([0.0, 1])
-    # plt.legend(loc='lower right')
-    # plt.show()
+    print(history.history.keys())
+    plt.plot(history.history['accuracy'], label='accuracy')
+    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.ylim([0.0, 1])
+    plt.legend(loc='lower right')
+    plt.show()
 
     #tf.keras.utils.plot_model(model, to_file='./modelImg.png', show_shapes=True)
 
 
     # Create some different quantization options
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    dynamic_quant_model = converter.convert()
+    # converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    # converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    # dynamic_quant_model = converter.convert()
 
-    converter.target_spec.supported_types = [tf.float16]
-    converter.representative_dataset = test_dataset
-    float16_model = converter.convert()
+    # converter.target_spec.supported_types = [tf.float16]
+    # converter.representative_dataset = test_dataset
+    # float16_model = converter.convert()
 
-    # converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    # converter.target_spec.supported_types = [tf.int8]
-    # converter.inference_input_type = tf.int8  # or tf.uint8
-    # converter.inference_output_type = tf.int8  # or tf.uint8
-    # int8_model = converter.convert()
+
+    # def evaluate_model(interpreter):
+    #     input_index = interpreter.get_input_details()[0]["index"]
+    #     output_index = interpreter.get_output_details()[0]["index"]
+
+    #     # Run predictions on ever y image in the "test" dataset.
+    #     prediction_digits = []
+    #     for i, test_image in enumerate(test_images):
+    #         if i % 1000 == 0:
+    #             print('Evaluated on {n} results so far.'.format(n=i))
+    #         # Pre-processing: add batch dimension and convert to float32 to match with
+    #         # the model's input data format.
+    #         test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
+    #         interpreter.set_tensor(input_index, test_image)
+
+    #         # Run inference.
+    #         interpreter.invoke()
+
+    #         # Post-processing: remove batch dimension and find the digit with highest
+    #         # probability.
+    #         output = interpreter.tensor(output_index)
+    #         digit = np.argmax(output()[0])
+    #         prediction_digits.append(digit)
+
+    #     print('\n')
+    #     # Compare prediction results with ground truth labels to calculate accuracy.
+    #     prediction_digits = np.array(prediction_digits)
+    #     accuracy = (prediction_digits == test_labels).mean()
+    #     return accuracy
+    # # converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    # # converter.target_spec.supported_types = [tf.int8]
+    # # converter.inference_input_type = tf.int8  # or tf.uint8
+    # # converter.inference_output_type = tf.int8  # or tf.uint8
+    # # int8_model = converter.convert()
+
+
+    # interpreter = tf.lite.Interpreter(model_content=float16_model)
+    # interpreter.allocate_tensors()
+
+    # float16_model_test_accuracy = evaluate_model(interpreter)
+
 
     
-    models = ['float16', 'dynamic', 'full']
-    times = []
-    accuracies = []
+    # models = ['float16', 'dynamic', 'full']
+    # times = []
+    # accuracies = []
 
-    # tf.config.experimental.reset_memory_stats()
-    # start_time = time()
-    # test_loss, test_acc = int8_model.evaluate(test_dataset, verbose=2)
-    # times.append(time() - start_time)
+    # # tf.config.experimental.reset_memory_stats()
+    # # start_time = time()
+    # # test_loss, test_acc = int8_model.evaluate(test_dataset, verbose=2)
+    # # times.append(time() - start_time)
+    # # accuracies.append(test_acc)
+    # # peak_mem.append(tf.config.experimental.get_memory_info("CPU").peak)
+
+    # start_time = time.time()
+    # test_loss, test_acc = float16_model.evaluate(test_dataset, verbose=2)
+    # times.append(time.time() - start_time)
     # accuracies.append(test_acc)
-    # peak_mem.append(tf.config.experimental.get_memory_info("CPU").peak)
 
-    start_time = time.time()
-    test_loss, test_acc = float16_model.evaluate(test_dataset, verbose=2)
-    times.append(time.time() - start_time)
-    accuracies.append(test_acc)
+    # start_time = time.time()
+    # test_loss, test_acc = dynamic_quant_model.evaluate(test_dataset, verbose=2)
+    # times.append(time.time() - start_time)
+    # accuracies.append(test_acc)
 
-    start_time = time.time()
-    test_loss, test_acc = dynamic_quant_model.evaluate(test_dataset, verbose=2)
-    times.append(time.time() - start_time)
-    accuracies.append(test_acc)
+    # start_time = time.time()
+    # test_loss, test_acc = model.evaluate(test_dataset, verbose=2)
+    # times.append(time.time() - start_time)
+    # accuracies.append(test_acc)
 
-    start_time = time.time()
-    test_loss, test_acc = model.evaluate(test_dataset, verbose=2)
-    times.append(time.time() - start_time)
-    accuracies.append(test_acc)
-
-    plt.plot(models, times, label='times')
-    plt.plot(models, accuracies, label='accuracy')
-    plt.xlabel('Model')
-    plt.legend(loc='lower right')
-    plt.show()
+    # plt.plot(models, times, label='times')
+    # plt.plot(models, accuracies, label='accuracy')
+    # plt.xlabel('Model')
+    # plt.legend(loc='lower right')
+    # plt.show()
 
 
 
 
-    #tf.saved_model.save(model, './savedModel/1/')
+    tf.saved_model.save(model, './savedModel/2/')
 
 
 
